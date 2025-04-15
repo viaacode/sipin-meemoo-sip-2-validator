@@ -1,0 +1,7 @@
+viaa:
+    logging:
+        level: DEBUG
+app:
+    pulsar:
+        host: !ENV ${PULSAR_HOST}
+        port: !ENV ${PULSAR_PORT}

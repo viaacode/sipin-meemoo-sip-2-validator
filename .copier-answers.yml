@@ -1,0 +1,10 @@
+# Changes here will be overwritten by Copier
+_commit: e5204a5
+_src_path: https://github.com/viaacode/meemoo-python-service-template
+project_description: A service that validates incoming meemoo SIPs.
+project_name: sipin-meemoo-sip-2-validator
+python_version: '3.12'
+uses_db: false
+uses_mediahaven: false
+uses_pulsar: true
+uses_s3: false

@@ -1,0 +1,1 @@
+print(f"New project with name sipin-meemoo-sip-2-validator")
