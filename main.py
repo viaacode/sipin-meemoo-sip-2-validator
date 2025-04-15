@@ -1,4 +1,1 @@
-from app.app import EventListener
-
-if __name__ == "__main__":
-    EventListener().start_listening()
+print(f"New project with name sipin-meemoo-sip-2-validator")

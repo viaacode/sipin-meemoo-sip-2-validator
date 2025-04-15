@@ -5,4 +5,3 @@ app:
     pulsar:
         host: !ENV ${PULSAR_HOST}
         port: !ENV ${PULSAR_PORT}
-        consumer_topic: !ENV ${PULSAR_CONSUMER_TOPIC}
