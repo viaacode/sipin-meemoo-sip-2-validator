@@ -7,6 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "viaa-chassis",
     "pulsar-client",
+    "meemoo-cloudevents",
 ]
 classifiers = [
   "Development Status :: 3 - Alpha",
