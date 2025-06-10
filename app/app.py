@@ -54,9 +54,8 @@ class EventListener:
         }
 
         outgoing_event = Event(attributes, outgoing_event_data)
-        outgoing_pulsar_event = PulsarBinding.to_protocol(outgoing_event, CEMessageMode.STRUCTURED)
         
-        self.pulsar_client.produce_event(topic="sipin.validate", event=outgoing_pulsar_event)
+        self.pulsar_client.produce_event(topic="sipin.validate", event=outgoing_event)
 
     def start_listening(self):
         """
