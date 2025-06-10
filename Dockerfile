@@ -27,4 +27,4 @@ RUN pip install -e . \
 USER appuser
 
 # This command will be run when starting the container. It is the same one that can be used to run the application locally.
-ENTRYPOINT [ "python", "main.py"]
+CMD [ "python", "main.py"]
