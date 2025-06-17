@@ -27,6 +27,7 @@ class EventListener:
         """
         config_parser = ConfigParser()
         self.log = logging.get_logger(__name__, config=config_parser)
+        self.pulsar_config = config_parser.app_cfg["pulsar"]
         self.pulsar_client = PulsarClient()
 
     def handle_incoming_message(self, event: Event):
@@ -63,7 +64,7 @@ class EventListener:
 
         outgoing_event = Event(attributes, outgoing_event_data)
 
-        self.pulsar_client.produce_event(topic="sipin.validate", event=outgoing_event)
+        self.pulsar_client.produce_event(topic=self.pulsar_config["producer_topic"], event=outgoing_event)
 
     def start_listening(self):
         """

@@ -6,3 +6,4 @@ app:
         host: !ENV ${PULSAR_HOST}
         port: !ENV ${PULSAR_PORT}
         consumer_topic: !ENV ${VALIDATOR_CONSUMER_TOPIC}
+        producer_topic: !ENV ${VALIDATOR_PRODUCER_TOPIC}
