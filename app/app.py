@@ -41,7 +41,8 @@ class EventListener:
             return
         incoming_event_data = event.get_data()
 
-        subject = event.get_attributes()["subject"]
+        attributes = event.get_attributes()
+        subject = attributes["subject"]
 
         self.log.info(f"Start handling of {subject}.")
 
@@ -51,7 +52,7 @@ class EventListener:
         attributes = EventAttributes(
             source=APP_NAME,
             subject=subject,
-            correlation_id=incoming_event_data["correlation_id"],
+            correlation_id=attributes["correlation_id"],
             outcome=EventOutcome.SUCCESS,
         )
 
