@@ -41,8 +41,12 @@ class EventListener:
             self.log.info(f"Dropping non successful event: {event.get_data()}")
             return
 
+        # Event attributes
         attributes = event.get_attributes()
         subject = attributes["subject"]
+
+        # Event data
+        incoming_event_data = event.get_data()
 
         self.log.info(f"Start handling of {subject}.")
 
@@ -59,7 +63,7 @@ class EventListener:
         outgoing_event_data = {
             "outcome": success,
             "validation_report": report,
-            "sip_path": subject,
+            "sip_path": incoming_event_data["destination"],
         }
 
         outgoing_event = Event(attributes, outgoing_event_data)
