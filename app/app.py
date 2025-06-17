@@ -39,7 +39,6 @@ class EventListener:
         if not event.has_successful_outcome():
             self.log.info(f"Dropping non successful event: {event.get_data()}")
             return
-        incoming_event_data = event.get_data()
 
         attributes = event.get_attributes()
         subject = attributes["subject"]
