@@ -67,7 +67,7 @@ class EventListener:
             )
 
             outgoing_event_data = {
-                "outcome": "",
+                "is_valid": False,
                 "validation_report": "",
                 "sip_path": "",
                 "message": "There should be one single root folder in the ZIP file.",
@@ -86,10 +86,10 @@ class EventListener:
             )
 
             outgoing_event_data = {
-                "outcome": success,  # Actual validation of the SIP
+                "is_valid": success,
                 "validation_report": report,
                 "sip_path": str(root_folder),
-                "mesage": "",
+                "message": "The SIP has been validated",
             }
 
         outgoing_event = Event(outgoing_attributes, outgoing_event_data)
