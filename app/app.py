@@ -54,12 +54,12 @@ class EventListener:
         root_folder = self._get_single_subfolder(unzipped_path)
 
         # Shared cloudevents
-        attributes = None
+        outgoing_attributes = None
         outgoing_event_data = {}
 
         if not root_folder:
             # Failed because the validation logic did not run
-            attributes = EventAttributes(
+            outgoing_attributes = EventAttributes(
                 source=APP_NAME,
                 subject=subject,
                 correlation_id=attributes["correlation_id"],
@@ -78,7 +78,7 @@ class EventListener:
             success, report = validator.validate(root_folder)
 
             # Successful in the sense that it was possible to run the validation logic
-            attributes = EventAttributes(
+            outgoing_attributes = EventAttributes(
                 source=APP_NAME,
                 subject=subject,
                 correlation_id=attributes["correlation_id"],
@@ -92,7 +92,7 @@ class EventListener:
                 "mesage": "",
             }
 
-        outgoing_event = Event(attributes, outgoing_event_data)
+        outgoing_event = Event(outgoing_attributes, outgoing_event_data)
 
         self.pulsar_client.produce_event(
             topic=self.pulsar_config["producer_topic"], event=outgoing_event
