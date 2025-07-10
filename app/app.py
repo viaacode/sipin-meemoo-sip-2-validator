@@ -54,32 +54,43 @@ class EventListener:
         root_folder = self._get_single_subfolder(unzipped_path)
 
         # Shared cloudevents
-        attributes = EventAttributes(
-            source=APP_NAME,
-            subject=subject,
-            correlation_id=attributes["correlation_id"],
-        )
-        outgoing_event_data = {
-            "outcome": "",
-            "validation_report": "",
-            "sip_path": "",
-            "message": ""
-        }
+        attributes = None
+        outgoing_event_data = {}
 
         if not root_folder:
             # Failed because the validation logic did not run
-            attributes["outcome"] = EventOutcome.FAIL
-            outgoing_event_data["message"] = "There should be one single root folder in the ZIP file."
+            attributes = EventAttributes(
+                source=APP_NAME,
+                subject=subject,
+                correlation_id=attributes["correlation_id"],
+                outcome=EventOutcome.FAIL,
+            )
+
+            outgoing_event_data = {
+                "outcome": "",
+                "validation_report": "",
+                "sip_path": "",
+                "message": "There should be one single root folder in the ZIP file.",
+            }
 
         else:
             validator = MeemooSIPValidator()
             success, report = validator.validate(root_folder)
 
             # Successful in the sense that it was possible to run the validation logic
-            attributes["outcome"] = EventOutcome.SUCCESS
-            outgoing_event_data["outcome"] = success  # Actual validation of the SIP
-            outgoing_event_data["validation_report"] = report
-            outgoing_event_data["sip_path"] = str(root_folder),
+            attributes = EventAttributes(
+                source=APP_NAME,
+                subject=subject,
+                correlation_id=attributes["correlation_id"],
+                outcome=EventOutcome.SUCCESS,
+            )
+
+            outgoing_event_data = {
+                "outcome": success,  # Actual validation of the SIP
+                "validation_report": report,
+                "sip_path": str(root_folder),
+                "mesage": "",
+            }
 
         outgoing_event = Event(attributes, outgoing_event_data)
 
