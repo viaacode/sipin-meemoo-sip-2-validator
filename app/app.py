@@ -1,4 +1,10 @@
-from cloudevents.events import Event, PulsarBinding, EventAttributes, EventOutcome, CEMessageMode
+from cloudevents.events import (
+    Event,
+    PulsarBinding,
+    EventAttributes,
+    EventOutcome,
+    CEMessageMode,
+)
 from viaa.configuration import ConfigParser
 from viaa.observability import logging
 
@@ -21,6 +27,7 @@ class EventListener:
         """
         config_parser = ConfigParser()
         self.log = logging.get_logger(__name__, config=config_parser)
+        self.pulsar_config = config_parser.app_cfg["pulsar"]
         self.pulsar_client = PulsarClient()
 
     def handle_incoming_message(self, event: Event):
@@ -33,29 +40,35 @@ class EventListener:
         if not event.has_successful_outcome():
             self.log.info(f"Dropping non successful event: {event.get_data()}")
             return
+
+        # Event attributes
+        attributes = event.get_attributes()
+        subject = attributes["subject"]
+
+        # Event data
         incoming_event_data = event.get_data()
 
-        self.log.info(f"Start handling of {event.get_attributes()['subject']}.")
-        
+        self.log.info(f"Start handling of {subject}.")
+
         validator = MeemooSIPValidator()
-        succes, report = validator.validate(Path(event.get_attributes()['subject']))
-        
+        success, report = validator.validate(Path(subject))
+
         attributes = EventAttributes(
             source=APP_NAME,
-            subject=incoming_event_data["subject"],
-            correlation_id=incoming_event_data["correlation_id"],
+            subject=subject,
+            correlation_id=attributes["correlation_id"],
             outcome=EventOutcome.SUCCESS,
         )
-        
+
         outgoing_event_data = {
-            "outcome": succes,
+            "outcome": success,
             "validation_report": report,
-            "sip_path": incoming_event_data["subject"]
+            "sip_path": incoming_event_data["destination"],
         }
 
         outgoing_event = Event(attributes, outgoing_event_data)
-        
-        self.pulsar_client.produce_event(topic="sipin.validate", event=outgoing_event)
+
+        self.pulsar_client.produce_event(topic=self.pulsar_config["producer_topic"], event=outgoing_event)
 
     def start_listening(self):
         """
@@ -64,7 +77,7 @@ class EventListener:
         while True:
             msg = self.pulsar_client.receive()
             try:
-                event = PulsarBinding.from_protocol(msg) # type: ignore
+                event = PulsarBinding.from_protocol(msg)  # type: ignore
                 self.handle_incoming_message(event)
                 self.pulsar_client.acknowledge(msg)
             except Exception as e:
