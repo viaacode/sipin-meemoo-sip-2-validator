@@ -3,7 +3,6 @@ from cloudevents.events import (
     PulsarBinding,
     EventAttributes,
     EventOutcome,
-    CEMessageMode,
 )
 from viaa.configuration import ConfigParser
 from viaa.observability import logging
@@ -47,28 +46,57 @@ class EventListener:
 
         # Event data
         incoming_event_data = event.get_data()
+        destination = incoming_event_data["destination"]
 
-        self.log.info(f"Start handling of {subject}.")
+        self.log.info(f"Start handling of {destination}.")
 
-        validator = MeemooSIPValidator()
-        success, report = validator.validate(Path(subject))
+        unzipped_path = Path(destination)
+        root_folder = self._get_single_subfolder(unzipped_path)
 
-        attributes = EventAttributes(
-            source=APP_NAME,
-            subject=subject,
-            correlation_id=attributes["correlation_id"],
-            outcome=EventOutcome.SUCCESS,
+        # Shared cloudevents
+        outgoing_attributes = None
+        outgoing_event_data = {}
+
+        if not root_folder:
+            # Failed because the validation logic did not run
+            outgoing_attributes = EventAttributes(
+                source=APP_NAME,
+                subject=subject,
+                correlation_id=attributes["correlation_id"],
+                outcome=EventOutcome.FAIL,
+            )
+
+            outgoing_event_data = {
+                "is_valid": False,
+                "validation_report": "",
+                "sip_path": "",
+                "message": "There should be one single root folder in the ZIP file.",
+            }
+
+        else:
+            validator = MeemooSIPValidator()
+            success, report = validator.validate(root_folder)
+
+            # Successful in the sense that it was possible to run the validation logic
+            outgoing_attributes = EventAttributes(
+                source=APP_NAME,
+                subject=subject,
+                correlation_id=attributes["correlation_id"],
+                outcome=EventOutcome.SUCCESS,
+            )
+
+            outgoing_event_data = {
+                "is_valid": success,
+                "validation_report": report,
+                "sip_path": str(root_folder),
+                "message": "The SIP has been validated",
+            }
+
+        outgoing_event = Event(outgoing_attributes, outgoing_event_data)
+
+        self.pulsar_client.produce_event(
+            topic=self.pulsar_config["producer_topic"], event=outgoing_event
         )
-
-        outgoing_event_data = {
-            "outcome": success,
-            "validation_report": report,
-            "sip_path": incoming_event_data["destination"],
-        }
-
-        outgoing_event = Event(attributes, outgoing_event_data)
-
-        self.pulsar_client.produce_event(topic=self.pulsar_config["producer_topic"], event=outgoing_event)
 
     def start_listening(self):
         """
@@ -86,3 +114,12 @@ class EventListener:
                 self.pulsar_client.negative_acknowledge(msg)
 
         self.pulsar_client.close()
+
+    def _get_single_subfolder(self, unzipped_path: Path) -> Path | None:
+        try:
+            items = list(unzipped_path.iterdir())
+            if len(items) == 1 and items[0].is_dir():
+                return items[0]
+            return None
+        except Exception:
+            return None
