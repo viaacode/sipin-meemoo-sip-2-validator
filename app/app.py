@@ -70,6 +70,7 @@ class EventListener:
                 "is_valid": False,
                 "validation_report": "",
                 "sip_path": "",
+                "sip_profile": "",
                 "message": "There should be one single root folder in the ZIP file.",
             }
 
@@ -90,6 +91,7 @@ class EventListener:
                 "is_valid": is_valid,
                 "validation_report": report.to_dict(),
                 "sip_path": str(root_folder),
+                "sip_profile": report.profile,
                 "message": "The SIP has been validated",
             }
 
