@@ -75,7 +75,8 @@ class EventListener:
 
         else:
             validator = MeemooSIPValidator()
-            success, report = validator.validate(root_folder)
+            is_valid = validator.validate(root_folder)
+            report = validator.validation_report
 
             # Successful in the sense that it was possible to run the validation logic
             outgoing_attributes = EventAttributes(
@@ -86,8 +87,8 @@ class EventListener:
             )
 
             outgoing_event_data = {
-                "is_valid": success,
-                "validation_report": report,
+                "is_valid": is_valid,
+                "validation_report": report.to_dict(),
                 "sip_path": str(root_folder),
                 "message": "The SIP has been validated",
             }
