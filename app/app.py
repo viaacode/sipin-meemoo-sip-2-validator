@@ -75,8 +75,8 @@ class EventListener:
             }
 
         else:
-            validator = MeemooSIPValidator()
-            is_valid = validator.validate(root_folder)
+            validator = MeemooSIPValidator(root_folder)
+            is_valid = validator.validate()
             report = validator.validation_report
 
             # Successful in the sense that it was possible to run the validation logic
