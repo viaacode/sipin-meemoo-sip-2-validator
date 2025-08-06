@@ -1,3 +1,6 @@
+from pathlib import Path
+import subprocess
+
 from cloudevents.events import (
     Event,
     PulsarBinding,
@@ -6,11 +9,11 @@ from cloudevents.events import (
 )
 from viaa.configuration import ConfigParser
 from viaa.observability import logging
+from meemoo_sip_validator.v2_1 import validate
+import _pulsar
 
 from app.services.pulsar import PulsarClient
 
-from meemoo_sip_validator.sip_validator import MeemooSIPValidator
-from pathlib import Path
 
 APP_NAME = "meemoo-sip-2-validator"
 
@@ -20,14 +23,15 @@ class EventListener:
     EventListener is responsible for listening to Pulsar events and processing them.
     """
 
-    def __init__(self):
+    def __init__(self, timeout_ms: int | None = None):
         """
         Initializes the EventListener with configuration, logging, and Pulsar client.
         """
         config_parser = ConfigParser()
         self.log = logging.get_logger(__name__, config=config_parser)
         self.pulsar_config = config_parser.app_cfg["pulsar"]
-        self.pulsar_client = PulsarClient()
+        self.pulsar_client = PulsarClient(timeout_ms=timeout_ms)
+        self.running = False
 
     def handle_incoming_message(self, event: Event):
         """
@@ -75,9 +79,7 @@ class EventListener:
             }
 
         else:
-            validator = MeemooSIPValidator(root_folder)
-            is_valid = validator.validate()
-            report = validator.validation_report
+            is_valid, report = validate(root_folder)
 
             # Successful in the sense that it was possible to run the validation logic
             outgoing_attributes = EventAttributes(
@@ -89,9 +91,8 @@ class EventListener:
 
             outgoing_event_data = {
                 "is_valid": is_valid,
-                "validation_report": report.to_dict(),
+                "validation_report": report,
                 "sip_path": str(root_folder),
-                "sip_profile": report.profile,
                 "message": "The SIP has been validated",
             }
 
@@ -105,8 +106,16 @@ class EventListener:
         """
         Starts listening for incoming messages from the Pulsar topic.
         """
-        while True:
-            msg = self.pulsar_client.receive()
+        self.ensure_java_installed()
+
+        # Allows stopping the service from another thread, usefull for testing.
+        self.running = True
+        while self.running:
+            try:
+                msg = self.pulsar_client.receive()
+            except _pulsar.Timeout:
+                continue
+
             try:
                 event = PulsarBinding.from_protocol(msg)  # type: ignore
                 self.handle_incoming_message(event)
@@ -119,10 +128,11 @@ class EventListener:
         self.pulsar_client.close()
 
     def _get_single_subfolder(self, unzipped_path: Path) -> Path | None:
-        try:
-            items = list(unzipped_path.iterdir())
-            if len(items) == 1 and items[0].is_dir():
-                return items[0]
+        subfolder = next(unzipped_path.iterdir(), None)
+        is_subfolder = subfolder is not None and subfolder.is_dir() 
+        if not is_subfolder:
             return None
-        except Exception:
-            return None
+        return subfolder
+
+    def ensure_java_installed(self):
+        _ = subprocess.run(["java", "--version"]) 
