@@ -10,12 +10,12 @@ import pulsar
 from cloudevents import PulsarBinding
 
 from app.app import EventListener
-from tests.conftest import pulsar_config, pulsar_container
+from tests.service.conftest import pulsar_config, pulsar_container
 
 
 @pytest.fixture
 def client() -> pulsar.Client:
-    return pulsar.Client(f"pulsar://{pulsar_config["host"]}:{pulsar_config["port"]}")
+    return pulsar.Client(f"pulsar://{pulsar_config['host']}:{pulsar_config['port']}")
 
 
 @pytest.fixture

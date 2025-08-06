@@ -6,7 +6,7 @@ from viaa.observability import logging
 
 class PulsarClient:
     """
-        Abstraction for a Pulsar Client.
+    Abstraction for a Pulsar Client.
     """
 
     def __init__(self, timeout_ms: int | None = None):
@@ -16,12 +16,14 @@ class PulsarClient:
         self.pulsar_config = config_parser.app_cfg["pulsar"]
 
         self.client = Client(
-            f'pulsar://{self.pulsar_config["host"]}:{self.pulsar_config["port"]}'
+            f"pulsar://{self.pulsar_config['host']}:{self.pulsar_config['port']}"
         )
         self.consumer = self.client.subscribe(
             self.pulsar_config["consumer_topic"], "sipin-meemoo-sip-2-validator"
         )
-        self.log.info(f"Started consuming topic: {self.pulsar_config['consumer_topic']}")
+        self.log.info(
+            f"Started consuming topic: {self.pulsar_config['consumer_topic']}"
+        )
         self.producers = {}
         self.timeout_ms = timeout_ms
 

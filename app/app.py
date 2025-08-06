@@ -129,10 +129,10 @@ class EventListener:
 
     def _get_single_subfolder(self, unzipped_path: Path) -> Path | None:
         subfolder = next(unzipped_path.iterdir(), None)
-        is_subfolder = subfolder is not None and subfolder.is_dir() 
+        is_subfolder = subfolder is not None and subfolder.is_dir()
         if not is_subfolder:
             return None
         return subfolder
 
     def ensure_java_installed(self):
-        _ = subprocess.run(["java", "--version"]) 
+        _ = subprocess.run(["java", "--version"])
