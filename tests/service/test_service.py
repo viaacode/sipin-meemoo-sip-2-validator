@@ -20,7 +20,9 @@ def client(pulsar_config: dict[str, Any]) -> pulsar.Client:
 
 
 @pytest.fixture
-def producer(request: pytest.FixtureRequest, client: pulsar.Client, pulsar_config: dict[str, Any]) -> pulsar.Producer:
+def producer(
+    request: pytest.FixtureRequest, client: pulsar.Client, pulsar_config: dict[str, Any]
+) -> pulsar.Producer:
     # Pretends to be the unzip service
     producer = client.create_producer(pulsar_config["consumer_topic"])
 
@@ -32,7 +34,9 @@ def producer(request: pytest.FixtureRequest, client: pulsar.Client, pulsar_confi
 
 
 @pytest.fixture
-def consumer(request: pytest.FixtureRequest, client: pulsar.Client, pulsar_config: dict[str, Any]) -> pulsar.Consumer:
+def consumer(
+    request: pytest.FixtureRequest, client: pulsar.Client, pulsar_config: dict[str, Any]
+) -> pulsar.Consumer:
     # Pretends to be the transformator service
     consumer = client.subscribe(pulsar_config["producer_topic"], "test_subscriber")
 
