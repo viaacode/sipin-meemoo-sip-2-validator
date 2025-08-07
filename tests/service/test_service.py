@@ -1,3 +1,4 @@
+from typing import Any
 from threading import Thread
 from queue import Queue
 import json
@@ -8,18 +9,18 @@ import pytest
 import pulsar
 
 from cloudevents import PulsarBinding
+from testcontainers.core.container import DockerContainer
 
 from app.app import EventListener
-from tests.service.conftest import pulsar_config, pulsar_container
 
 
 @pytest.fixture
-def client() -> pulsar.Client:
+def client(pulsar_config: dict[str, Any]) -> pulsar.Client:
     return pulsar.Client(f"pulsar://{pulsar_config['host']}:{pulsar_config['port']}")
 
 
 @pytest.fixture
-def producer(request: pytest.FixtureRequest, client: pulsar.Client) -> pulsar.Producer:
+def producer(request: pytest.FixtureRequest, client: pulsar.Client, pulsar_config: dict[str, Any]) -> pulsar.Producer:
     # Pretends to be the unzip service
     producer = client.create_producer(pulsar_config["consumer_topic"])
 
@@ -31,7 +32,7 @@ def producer(request: pytest.FixtureRequest, client: pulsar.Client) -> pulsar.Pr
 
 
 @pytest.fixture
-def consumer(request: pytest.FixtureRequest, client: pulsar.Client) -> pulsar.Consumer:
+def consumer(request: pytest.FixtureRequest, client: pulsar.Client, pulsar_config: dict[str, Any]) -> pulsar.Consumer:
     # Pretends to be the transformator service
     consumer = client.subscribe(pulsar_config["producer_topic"], "test_subscriber")
 
@@ -42,7 +43,7 @@ def consumer(request: pytest.FixtureRequest, client: pulsar.Client) -> pulsar.Co
     return consumer
 
 
-def test_pulsar_container_running():
+def test_pulsar_container_running(pulsar_container: DockerContainer):
     exit_code, _ = pulsar_container.exec("pulsar version")
     assert exit_code == 0
 
@@ -80,7 +81,7 @@ def test_message(producer: pulsar.Producer, consumer: pulsar.Consumer):
         },
     }
 
-    event_listener = EventListener(timeout_ms=500)
+    event_listener = EventListener(timeout_ms=200)
     queue: Queue[pulsar.Message] = Queue()
 
     def produce():
@@ -89,7 +90,6 @@ def test_message(producer: pulsar.Producer, consumer: pulsar.Consumer):
             json.dumps(event_data).encode("utf-8"),
             properties=event_properties,
         )
-        event_listener.running = False
 
     def consume():
         try:
@@ -97,6 +97,8 @@ def test_message(producer: pulsar.Producer, consumer: pulsar.Consumer):
             queue.put(message)
         except pulsar.Timeout:
             pass
+        finally:
+            event_listener.running = False
 
     producer_thread = Thread(target=produce)
     consumer_thread = Thread(target=consume)
