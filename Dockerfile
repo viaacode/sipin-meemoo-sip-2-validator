@@ -1,12 +1,12 @@
 FROM python:3.12-slim
 
-# Install OpenJDK-17 and wget
+# Install OpenJDK-21 and wget
 RUN apt-get update && \
-    apt-get install -y openjdk-17-jdk-headless wget && \
+    apt-get install -y openjdk-21-jdk-headless wget && \
     apt-get clean;
 
 # Set Java path.
-ENV JAVA_HOME /usr/lib/jvm/java-17-openjdk-amd64/
+ENV JAVA_HOME /usr/lib/jvm/java-21-openjdk-amd64/
 ENV PATH $JAVA_HOME/bin:$PATH
 
 # Make a new group and user so we don't run as root.
