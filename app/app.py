@@ -61,9 +61,11 @@ class EventListener:
         outgoing_attributes = None
         outgoing_event_data = {}
 
+        producer_topic: str = self.pulsar_config["producer_topic"]
         if not root_folder:
             # Failed because the validation logic did not run
             outgoing_attributes = EventAttributes(
+                type=producer_topic,
                 source=APP_NAME,
                 subject=subject,
                 correlation_id=attributes["correlation_id"],
@@ -83,6 +85,7 @@ class EventListener:
 
             # Successful in the sense that it was possible to run the validation logic
             outgoing_attributes = EventAttributes(
+                type=producer_topic,
                 source=APP_NAME,
                 subject=subject,
                 correlation_id=attributes["correlation_id"],
@@ -98,9 +101,7 @@ class EventListener:
 
         outgoing_event = Event(outgoing_attributes, outgoing_event_data)
 
-        self.pulsar_client.produce_event(
-            topic=self.pulsar_config["producer_topic"], event=outgoing_event
-        )
+        self.pulsar_client.produce_event(topic=producer_topic, event=outgoing_event)
 
     def start_listening(self):
         """
